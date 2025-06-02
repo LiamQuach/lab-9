@@ -1,0 +1,105 @@
+---
+title: "Art from Code Lab"
+author: "Liam Quach"
+date: "2025-06-01"
+format: html
+---
+```{r}
+#| echo: false
+#| message: false
+# Load libraries
+library(ambient)
+library(dplyr)
+library(ggplot2)
+
+```
+
+# Piece 1: Data-Driven Scatter Art
+
+## Title: "Urban Pulse"
+
+**Museum-Style Description:**
+*A vibrant commentary on the ceaseless motion of the metropolis, where each point embodies the rhythm of urban life. The interplay of hues and form captures the dynamic energy of crowded streets under shifting neon lights.*
+
+```{r urban}
+# Use the built-in `mpg` dataset to create an abstract scatterplot
+mpg_subset <- mpg
+
+ggplot(mpg_subset, aes(x = displ, y = hwy, colour = drv)) +
+  geom_point(show.legend = FALSE, size = 3, alpha = 0.8) +
+  geom_point(show.legend = FALSE, size = 1, colour = "#222222") +
+  coord_polar() +
+  scale_color_brewer(palette = "Set2") +
+  theme_void() +
+  theme(
+    plot.background = element_rect(fill = "#f0f0f0", colour = NA),
+    panel.background = element_rect(fill = "#f0f0f0", colour = NA)
+  )
+```
+
+**Code Choices and Influence on Appearance:**
+
+* **Dataset (`mpg`):** Provided raw numerical coordinates; the displacement (`displ`) and highway mileage (`hwy`) become radially plotted variables.
+* **Mapping (`aes(x = displ, y = hwy, colour = drv)`):** Assigns color based on drive type (front/rear/all-wheel), turning mechanical categories into an abstract palette.
+* **`geom_point(size = 3, alpha = 0.8)`:** Enlarged, semi-transparent points create overlapping layers, suggesting density and movement.
+* **Overlay with smaller black points (`size = 1, colour = "#222222"`):** Introduces a rhythmic dotted texture, evoking city lights glimmering against darkness.
+* **`coord_polar()`:** Transforms Cartesian axes into polar coordinates, resulting in a swirling radial composition that abstracts the notion of a conventional scatterplot.
+* **Color Scale (`scale_color_brewer(palette = "Set2")`):** A harmonious qualitative palette encourages visual unity while preserving category distinctions.
+* **`theme_void()` and custom background:** Removes axes, gridlines, and labels, creating a minimalist frame that emphasizes form and color over informational content.
+
+# Piece 2: Generative Noise Art
+
+## Title: "Fractal Reverie"
+
+**Museum-Style Description:**
+*A contemplative journey into the fractal realms, where infinite recurrence and organic symmetry coalesce. The piece evokes the sensation of traversing a dreamscape stitched from echoes of natural rhythms, as if glimpsing the hidden architecture of reality itself.*
+
+```{r echo=TRUE}
+# Define canvas
+pixels <- 800
+x_coords <- seq(0, 1, length.out = pixels)
+y_coords <- seq(0, 1, length.out = pixels)
+canvas <- ambient::long_grid(x = x_coords, y = y_coords)
+
+# Generate fractal noise using Perlin + FBM
+fractal_canvas <- canvas %>%
+  mutate(
+    paint = fracture(
+      noise = gen_perlin,
+      fractal = fbm,
+      x = x,
+      y = y,
+      seed = 42,
+      octaves = 6,
+      frequency = 4
+    )
+  )
+
+# Plot with custom palette
+palette_vals <- c("#2E294E", "#541388", "#F1E9DA", "#FF2E63", "#0EAD69")
+
+ggplot(fractal_canvas, aes(x, y, fill = paint)) +
+  geom_raster(show.legend = FALSE) +
+  scale_fill_gradientn(colours = palette_vals) +
+  theme_void() +
+  coord_equal() +
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0))
+```
+
+**Code Choices and Influence on Appearance:**
+
+* **Canvas Construction (`long_grid` with `pixels = 800`):** Creates a high-resolution square grid (800×800) in the unit square, providing a dense field in which noise values can vary smoothly.
+* **`fracture(..., noise = gen_perlin, fractal = fbm, octaves = 6, frequency = 4, seed = 42)`:**
+
+  * **`gen_perlin`:** Produces coherent Perlin noise as the base pattern.
+  * **`fbm` (Fractional Brownian Motion):** Combines multiple octaves (6 total) of Perlin noise, each successive octave doubling frequency and halving amplitude, resulting in a rich, multi-scale fractal texture.
+  * **`octaves = 6`:** Determines the number of noise layers; more octaves introduce finer details at smaller scales, deepening the complexity.
+  * **`frequency = 4`:** Sets the initial granularity of the Perlin noise; mid-range frequency yields balanced variation—neither too smooth nor overly chaotic.
+  * **`seed = 42`:** Fixes the pseudorandom sequence, ensuring reproducibility; changing the seed would generate a completely new fractal arrangement.
+* **Color Palette (`scale_fill_gradientn(colours = palette_vals)`):**
+
+  * Utilizes a five-color custom palette that transitions from deep indigo through warm creams to vibrant magenta and lush green, suggesting otherworldly luminosity.
+  * Linear interpolation between these colors translates continuous noise values into seamless chromatic transitions, accentuating the fractal layers.
+* **`theme_void()` and `coord_equal()`:** Strips away axes, ticks, and margins, centering attention on the fractal pattern itself; equal coordinate scaling preserves aspect ratio, ensuring no distortion of the noise structure.
+* **Plotting via `geom_raster(show.legend = FALSE)`:** Renders each grid cell as a pixel-like tile, creating a cohesive image; disabling the legend removes extraneous information, supporting a purely aesthetic experience.
